@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Capture Example</title>
+</head>
+<body>
+    <h2>Face Detection Camera Example</h2>
+    <p id="status">OpenCV.js is loading...</p>
+    <div>
+        <div class="inputoutput">
+            <video autoplay id="videoInput" width="500px" height="390px"></video>
+            <div class="caption">VideoInput</div>
+        </div>
+        <div class="inputoutput">
+            <canvas id="canvasOutput"></canvas>
+            <div class="caption">canvasOutput</div>
+        </div>
+    </div>
+    
+    <!-- don't use async loading -->
+    <script src="js/utils.js"  type="text/javascript"></script>
+    <script src="https://docs.opencv.org/3.4/opencv.js" type="text/javascript"></script>
+    
+    <script src="js/main.js" type="text/javascript"></script>
+</body>
+</html>
