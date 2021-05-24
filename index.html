@@ -4,19 +4,28 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Capture Example</title>
+    <title>Study With Us</title>
+    <link rel="stylesheet" href="css/main.css" type="text/css"></link>
 </head>
 <body>
-    <h2>Face Detection Camera Example</h2>
+    <h2>Face Detection & Eye Detection</h2>
     <p id="status">OpenCV.js is loading...</p>
-    <div>
+    <div class="videos">
         <div class="inputoutput">
-            <video autoplay id="videoInput" width="500px" height="390px"></video>
-            <div class="caption">VideoInput</div>
+            <video autoplay playsinline id="videoInput" width="250px" height="190px"></video>
+            <div class="caption">videoInput: Local stream</div>
         </div>
         <div class="inputoutput">
             <canvas id="canvasOutput"></canvas>
-            <div class="caption">canvasOutput</div>
+            <div class="caption">canvasOutput: From video to canvas</div>
+        </div>
+        <div class="inputoutput">
+            <video autoplay playsinline id="videoOutput" width="250px" height="190px"></video>
+            <div class="caption">videoOutput: Stream from canvas to video</div>
+        </div>
+        <div class="inputoutput">
+            <video autoplay playsinline id="remoteVideo" width="250px" height="190px"></video>
+            <div class="caption">remoteVideo: RTCPeerConnection stream from canvas</div>
         </div>
     </div>
     

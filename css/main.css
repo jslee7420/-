@@ -1,0 +1,10 @@
+.videos{
+    width:1500px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.inputoutput{
+    text-align:center;
+    font-weight:bold;
+}

@@ -6,13 +6,15 @@
 
 #### jslee7420
 
-- [ ] Implement p2p connection in local enviroment
+- [ ] Implement eye blink detection
+- [ ] Implement p2p connection between two different client
+- [ ] Implement Turn server
 
 ### In Progress 🚀
 
 #### jslee7420
 
-- [ ] Implement stream from a canvas element to a video element
+- [ ] Implement Signaling channel
 
 ### Done ✓
 
@@ -20,3 +22,5 @@
 - [x] Implement video to canvas
 - [x] Implement face detection
 - [x] Implement eye detection
+- [x] Implement stream from a canvas element to a video element
+- [x] Implement RTCPeerConnection in local enviroment
