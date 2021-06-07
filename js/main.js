@@ -3,6 +3,8 @@ let video = document.querySelector("#videoInput");
 let canvasOutput = document.querySelector("#canvasOutput");
 let videoOut = document.querySelector("#videoOutput");
 let remoteVideo = document.querySelector("#remoteVideo");
+let isEmpty = document.querySelector("#isEmpty");
+let faceDetection = document.querySelector("#faceDetection");
 
 // Define peer connections, streams
 let localPeerConnection;
@@ -10,6 +12,10 @@ let remotePeerConnection;
 
 let localStream;
 let remoteStream;
+
+let startTime;
+let endTime;
+
 
 // Set up to exchange only video.
 const offerOptions = {
@@ -228,7 +234,7 @@ cv['onRuntimeInitialized'] = () => {
         eyeClassifier.load(eyeCascadFile); // in the callback, load the cascade from file 
     });
 
-    const FPS = 60;
+    const FPS = 30;
 
     function processVideo() {
         try {
@@ -253,6 +259,18 @@ cv['onRuntimeInitialized'] = () => {
             // detect faces.
             try {
                 faceClassifier.detectMultiScale(gray, faces, 1.1, 3, 0);
+                if(faces.size()==0){
+                    endTime= Date.now()
+                    faceDetection.innerHTML = '얼굴 없음'
+                }else{
+                    faceDetection.innerHTML = '얼굴 감지';
+                    startTime = Date.now();
+                }
+                if(endTime - startTime>3000){
+                    isEmpty.innerHTML = '자리비움';
+                }else{
+                    isEmpty.innerHTML = '';
+                }
                 console.log(faces.size());
             } catch (err) {
                 console.log(err);
@@ -290,6 +308,7 @@ cv['onRuntimeInitialized'] = () => {
     //schedule first one.
     video.onplay = (event) => {
         console.log("video start");
+
         streaming = true;
         processVideo();
         call();
