@@ -1,10 +1,16 @@
 // Define DOM elements
 let video = document.querySelector("#videoInput");
 let canvasOutput = document.querySelector("#canvasOutput");
-let videoOut = document.querySelector("#videoOutput");
+// let videoOut = document.querySelector("#videoOutput");
 let remoteVideo = document.querySelector("#remoteVideo");
 let isEmpty = document.querySelector("#isEmpty");
 let faceDetection = document.querySelector("#faceDetection");
+
+let sendChannel;
+let receiveChannel;
+let dataChannelSend = document.querySelector('textarea#dataChannelSend');
+let dataChannelReceive = document.querySelector('textarea#dataChannelReceive');
+let sendButton = document.querySelector('button#sendButton');
 
 // Define peer connections, streams
 let localPeerConnection;
@@ -13,9 +19,40 @@ let remotePeerConnection;
 let localStream;
 let remoteStream;
 
-let startTime;
-let endTime;
+let noFaceStartTime;
+let noFaceEndTime;
 
+let startTime;
+let currentTime;
+let timeDiff
+let timer = document.querySelector('#timer');
+
+////////////////////////////////////////
+// Time Count
+startTime = Date.now();
+setInterval(timeCounter,1000);
+
+
+function timeCounter(){
+    currentTime = Date.now();
+    timeDiff = new Date(currentTime - startTime);
+    let hour = timeDiff.getHours()-9; // UTC 보다 9시간 빠름(대한민국 기준)
+    let minute = timeDiff.getMinutes();
+    let second = timeDiff.getSeconds();
+    if(hour<10){
+        hour = '0' + hour.toString();
+    }
+    if(minute<10){
+        minute = '0' + minute.toString();
+    }
+    if(second<10){
+        second = '0' + second.toString();
+    }
+    timer.innerHTML = hour + ':' + minute + ':' + second;
+}
+
+
+//////////////////////////////////////
 
 // Set up to exchange only video.
 const offerOptions = {
@@ -25,7 +62,7 @@ const offerOptions = {
 // Capture canvas stream
 let canvasStream = canvasOutput.captureStream();
 console.log('Got stream from canvas');
-videoOut.srcObject = canvasStream;
+// videoOut.srcObject = canvasStream;
 
 // Capture video stream using WebRTC API
 async function playVideoFromCamera() {
@@ -155,12 +192,66 @@ async function createdAnswer(description) {
     } catch (err) {
         setSessionDescriptionError;
     }
-
 }
 
+/////////////////////////////////////
+// Chat functions
+
+function onSendChannelStateChange() {
+    let readyState = sendChannel.readyState;
+    console.log('Send channel state is: ' + readyState);
+    if (readyState === 'open') {
+        dataChannelSend.disabled = false;
+        dataChannelSend.focus();
+        sendButton.disabled = false;
+    } else {
+        dataChannelSend.disabled = true;
+        sendButton.disabled = true;
+    }
+}
+
+
+function receiveChannelCallback(event) {
+    console.log('Receive Channel Callback');
+    receiveChannel = event.channel;
+    receiveChannel.onmessage = (event) => {
+        console.log('Received Message');
+        dataChannelReceive.value += (event.data + '\n');
+    };
+    receiveChannel.onopen = onReceiveChannelStateChange;
+    receiveChannel.onclose = onReceiveChannelStateChange;
+}
+
+
+function onReceiveChannelStateChange() {
+    console.log('Receive channel state is: ' + receiveChannel.readyState);
+}
+
+function sendData() {
+    let data = dataChannelSend.value;
+    data = 'user1: '+ data;
+    sendChannel.send(data);
+    console.log('Sent Data: ' + data);
+}
+
+
+dataChannelSend.onkeypress = () => {
+    let key = window.event.keyCode;
+    if(key ===13){
+        sendData();
+        setTimeout(()=>dataChannelSend.value='',10);
+    }
+}
+dataChannelReceive.disabled = true;
+
+//////////////////////////////////////////////////////////////
 // Call action
 async function call() {
     console.log("Starting call.");
+    dataChannelSend.placeholder = '';
+    sendButton.onclick = sendData;
+    
+
 
     // Get local media stream tracks
     const videoTracks = canvasStream.getVideoTracks();
@@ -174,19 +265,31 @@ async function call() {
 
     const servers = null; // Allows for RTC server config.
 
-    // Create peer connections and add behavior.
+    // Create local peer connections and add behavior.
     localPeerConnection = new RTCPeerConnection(servers);
     console.log('Created local peer connection object localPeerConnection.')
 
     localPeerConnection.addEventListener('icecandidate', handleConnection);
     localPeerConnection.addEventListener('iceconnectionstatechange', handleConnectionChange);
 
+    // Create data send channel and add behavior
+    sendChannel = localPeerConnection.createDataChannel('sendDataChannel', null);
+    console.log('Created send data channel');
+    sendChannel.onopen = onSendChannelStateChange;
+    sendChannel.onclose = onSendChannelStateChange;
+
+
+
+    // Create remote peer connections and add behavior
     remotePeerConnection = new RTCPeerConnection(servers);
     console.log('Created remote peer connection object remotePeerConnection.');
 
     remotePeerConnection.addEventListener('icecandidate', handleConnection);
     remotePeerConnection.addEventListener('iceconnectionstatechange', handleConnectionChange);
     remotePeerConnection.addEventListener('addstream', gotRemoteMediaStream);
+
+    // Add data receive behavior
+    remotePeerConnection.ondatachannel = receiveChannelCallback;
 
     // Add local stream to connection and create offer to connect.
     localPeerConnection.addStream(canvasStream);
@@ -208,7 +311,6 @@ async function call() {
 // This has to be called after OpenCV gets loaded, checks if opencv has initialized
 cv['onRuntimeInitialized'] = () => {
     console.log("OpenCV loaded successfully!");
-    document.querySelector('#status').innerHTML = 'OpenCV.js is ready.';
 
     let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
     let dst = new cv.Mat(video.height, video.width, cv.CV_8UC4);
@@ -259,16 +361,16 @@ cv['onRuntimeInitialized'] = () => {
             // detect faces.
             try {
                 faceClassifier.detectMultiScale(gray, faces, 1.1, 3, 0);
-                if(faces.size()==0){
-                    endTime= Date.now()
+                if (faces.size() == 0) {
+                    noFaceEndTime = Date.now()
                     faceDetection.innerHTML = '얼굴 없음'
-                }else{
+                } else {
                     faceDetection.innerHTML = '얼굴 감지';
-                    startTime = Date.now();
+                    noFaceStartTime = Date.now();
                 }
-                if(endTime - startTime>3000){
+                if (noFaceEndTime - noFaceStartTime > 3000) {
                     isEmpty.innerHTML = '자리비움';
-                }else{
+                } else {
                     isEmpty.innerHTML = '';
                 }
                 console.log(faces.size());
