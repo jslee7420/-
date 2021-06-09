@@ -11,6 +11,7 @@ let receiveChannel;
 let dataChannelSend = document.querySelector('textarea#dataChannelSend');
 let dataChannelReceive = document.querySelector('textarea#dataChannelReceive');
 let sendButton = document.querySelector('button#sendButton');
+let unoccupiedTimeElement = document.querySelector('#unoccupiedTime');
 
 // Define peer connections, streams
 let localPeerConnection;
@@ -26,6 +27,8 @@ let startTime;
 let currentTime;
 let timeDiff
 let timer = document.querySelector('#timer');
+let unoccupiedTime = 0;
+let unoccupiedFlag = false;
 
 ////////////////////////////////////////
 // Time Count
@@ -49,6 +52,25 @@ function timeCounter(){
         second = '0' + second.toString();
     }
     timer.innerHTML = hour + ':' + minute + ':' + second;
+
+
+    if(unoccupiedFlag){
+        unoccupiedTime += 1000;
+        let timeStack = new Date(unoccupiedTime);
+        let hh = timeStack.getHours()-9; // UTC 보다 9시간 빠름(대한민국 기준)
+        let mm = timeStack.getMinutes();
+        let ss = timeStack.getSeconds();
+        if(hh<10){
+            hh = '0' + hh.toString();
+        }
+        if(mm<10){
+            mm = '0' + mm.toString();
+        }
+        if(ss<10){
+            ss = '0' + ss.toString();
+        }
+        unoccupiedTimeElement.innerHTML = hh + ':' + mm + ':' + ss;
+    }    
 }
 
 
@@ -232,6 +254,7 @@ function sendData() {
     data = 'user1: '+ data;
     sendChannel.send(data);
     console.log('Sent Data: ' + data);
+    setTimeout(()=>dataChannelSend.value='',10);
 }
 
 
@@ -239,7 +262,6 @@ dataChannelSend.onkeypress = () => {
     let key = window.event.keyCode;
     if(key ===13){
         sendData();
-        setTimeout(()=>dataChannelSend.value='',10);
     }
 }
 dataChannelReceive.disabled = true;
@@ -365,11 +387,13 @@ cv['onRuntimeInitialized'] = () => {
                     noFaceEndTime = Date.now()
                     faceDetection.innerHTML = '얼굴 없음'
                 } else {
+                    unoccupiedFlag = false;
                     faceDetection.innerHTML = '얼굴 감지';
                     noFaceStartTime = Date.now();
                 }
                 if (noFaceEndTime - noFaceStartTime > 3000) {
                     isEmpty.innerHTML = '자리비움';
+                    unoccupiedFlag = true;
                 } else {
                     isEmpty.innerHTML = '';
                 }
