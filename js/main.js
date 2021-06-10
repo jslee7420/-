@@ -239,6 +239,7 @@ function receiveChannelCallback(event) {
     receiveChannel.onmessage = (event) => {
         console.log('Received Message');
         dataChannelReceive.value += (event.data + '\n');
+        dataChannelReceive.scrollTop = dataChannelReceive.scrollHeight;
     };
     receiveChannel.onopen = onReceiveChannelStateChange;
     receiveChannel.onclose = onReceiveChannelStateChange;
