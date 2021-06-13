@@ -46,18 +46,40 @@
             </div>
         </div>
 
-        <aside class="sideTab">
-            <h3> Timer</h3>
-            <p id="timer">00:00:00</p><br />
-            <h3> 자리비움 시간 카운트</h3>
-            <p id="unoccupiedTime">00:00:00</p><br />
-            <h3> 졸음 시간 카운트</h3>
-            <p id="drowsinessTime">00:00:00</p><br />
-            <h3>Chat</h3>
-            <textarea id="dataChannelReceive"></textarea><br />
-            <textarea id="dataChannelSend"></textarea>
-            <button id="sendButton">Send</button>
+
+        <!-- new aside tab -->
+        <aside class ="sideTab">
+        <ul class="nav nav-pills mb-3 position-absolute" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Home</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Chat</button>
+            </li>
+          </ul>
+          <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                <h1> <span class="badge bg-secondary ">Timer</span></h1>
+                <p id="timer"></p>
+                <h1> <span class="badge bg-secondary">자리비움 시간 카운트</span></h1>
+                <p id="unoccupiedTime">00:00:00</p><br />
+                <h1> <span class="badge bg-secondary">졸음 시간 카운트</span></h1>
+                <p id="drowsinessTime">00:00:00</p><br /></div>
+
+            <div class="tab-pane fade " id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                <h3>Chat</h3>
+                    <textarea id="dataChannelReceive"></textarea><br />
+                    <textarea id="dataChannelSend"></textarea>
+                    <button id="sendButton">Send</button>
+                
+                </div>
+          </div>
         </aside>
+
+
+
+
+
     </main>
 
     <!-- don't use async loading -->
