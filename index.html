@@ -2,155 +2,68 @@
 <html lang="en">
 
 <head>
-  
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study With Us</title>
+    <link rel="shortcut icon" href="#">
     <link rel="stylesheet" href="css/main.css" type="text/css">
     </link>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script src="face-api.min.js"></script>
 </head>
-<div class="fixed-top">
-<body>
-    <nav class="navbar navbar-light bg-dark">
-        <div class="container-fluid">
-            <nav class="navbar navbar-dark bg-dark">
-                <a class="navbar-brand  text-light fs-3" href="#"> Study With Us Demo</a>
-                <a class="Home text-light fs-3"style= "margin-right: 30px;
-                margin-left: 10px" href="#" >Home</a>
-                <a class="My Study text-light fs-3 " href="#">Mystudy</a>
-           </nav>
-                
 
+<body>
+    <nav class="navbar bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand  text-light fw-bolder" href="#"> Study With Us Demo</a>
+            <!-- <a class="Home text-light" href="#" >Home</a>
+        <a class="My Study text-light" href="#">Mystudy</a> -->
         </div>
     </nav>
     <main>
-        <!-- <div class="container" style=" margin-top: 200px; margin-left: 300px"></div>  -->
-        <div class="row position-relative" style="width: 800px;
-        margin-top: 200px;
-        margin-left: 300px">
-            <div class="col">
-                <div class="card">
-                    <canvas class="card-img-top " id="canvasOutput"></canvas>
-                    <div class="card-body">
-                        <p class="card-text">Local Video</p>
-                        <p class="card-text" id="faceDetection">얼굴 없음</p>
-                      
-                        <p class="card-text" id="isEmpty">자리 비움</p>
-                    
-                    </div>
-                </div>
-           
-         
-            </div>
-            <div class="col"> 
-                <div class="card">
-                    <video autoplay playsinline class="card-img-top" id="remoteVideo"></video>
-                    <div class="card-body">
-                        <p class="card-text">Remote Video</p>
-                    </div>
-                </div>
-                <div class="inputoutput" style="display:none">
-                    <video autoplay playsinline id="videoInput" width="250px" height="190px"></video>
-                    <div class="caption">videoInput: Local stream</div>
-                </div>
-    
-            </div>
-          
-          </div>
-
-
-          <!-- <div class="container"> -->
-              <div class="col position-absolute" style="width: 400px;
-              height: 400px;
-              left: 1400px;
-              bottom: 40px;
-              right: 30px">
-                  <div class="row" style="height: 130px">
-                    <h1> <span class="badge bg-secondary ">Timer</span></h1>
-                    <p id="timer"></p>
-                  </div>
-                  <div class="row" style="height: 130px">
-                    <h1> <span class="badge bg-secondary">자리비움 시간 카운트</span></h1>
-                    <p id="unoccupiedTime"></p>
-                </div>
-                <!-- <div class="row"> -->
-                    <h3>Chat</h3>
-                    <textarea id="dataChannelReceive"></textarea><br />
-                    <textarea id="dataChannelSend"></textarea>
-                    <button id="sendButton">Send</button>
-
-
-                    <!-- <textarea id="dataChannelReceive" style="height: 206px;
-                    margin-bottom: 10px;"></textarea><br />
-                    <textarea id="dataChannelSend" style="height: 76px;
-                    margin-bottom: 10px"></textarea>
-                    <button id="sendbutton">Send</button>
-                     -->
-                <!-- </div> -->
-
-
-
-              </div>
-
-
-
-
-        <!-- <div class="videos"> -->
-            <!-- <div class="card">
-                <canvas class="card-img-top m-5" id="canvasOutput"></canvas>
+        <div class="videos">
+            <div class="card">
+                <canvas class="card-img-top" id="canvasOutput" width="360" , height="280"></canvas>
                 <div class="card-body">
                     <p class="card-text">Local Video</p>
                     <p class="card-text" id="faceDetection">얼굴 없음</p>
-                    <p class="card-text" id="isEmpty">자리 비움</p>
+                    <p class="card-text" id="eyeblinkDetection"></p>
+                    <p class="card-text" id="detectionState">자리 비움</p>
                 </div>
             </div>
             <div class="card">
-                <video autoplay playsinline class="card-img-top" id="remoteVideo" width="250px" height="190px"></video>
+                <video autoplay playsinline class="card-img-top" id="remoteVideo" width="360" height="280"></video>
                 <div class="card-body">
                     <p class="card-text">Remote Video</p>
                 </div>
             </div>
-            <div class="inputoutput" style="display:none">
-                <video autoplay playsinline id="videoInput" width="250px" height="190px"></video>
+            <div class="localvideo" style="display:none">
+                <video autoplay playsinline id="videoInput" width="360" height="280"></video>
                 <div class="caption">videoInput: Local stream</div>
-            </div> -->
-
-            <!-- <div class="inputoutput">
-                <video autoplay playsinline id="videoOutput" width="250px" height="190px"></video>
-                <div class="caption">videoOutput: Stream from canvas to video</div>
-            </div> -->
-        </div>
+            </div>
         </div>
 
-
-
-
-<!-- 
         <aside class="sideTab">
-            <h1> <span class="badge bg-secondary mr-5">Timer</span></h1>
-            <p id="timer"></p>
-            <h1> <span class="badge bg-secondary">자리비움 시간 카운트</span></h1>
-            <p id="unoccupiedTime"></p>
+            <h3> Timer</h3>
+            <p id="timer">00:00:00</p><br />
+            <h3> 자리비움 시간 카운트</h3>
+            <p id="unoccupiedTime">00:00:00</p><br />
+            <h3> 졸음 시간 카운트</h3>
+            <p id="drowsinessTime">00:00:00</p><br />
             <h3>Chat</h3>
             <textarea id="dataChannelReceive"></textarea><br />
             <textarea id="dataChannelSend"></textarea>
             <button id="sendButton">Send</button>
-        </aside> -->
-
+        </aside>
     </main>
-
 
     <!-- don't use async loading -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous">
     </script>
-    <script src="js/utils.js" type="text/javascript"></script>
-    <script src="https://docs.opencv.org/3.4/opencv.js" type="text/javascript"></script>
-
     <script src="js/main.js" type="text/javascript"></script>
 </body>
 

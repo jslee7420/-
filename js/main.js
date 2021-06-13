@@ -1,10 +1,10 @@
 // Define DOM elements
 let video = document.querySelector("#videoInput");
 let canvasOutput = document.querySelector("#canvasOutput");
-// let videoOut = document.querySelector("#videoOutput");
 let remoteVideo = document.querySelector("#remoteVideo");
-let isEmpty = document.querySelector("#isEmpty");
+let detectionState = document.querySelector("#detectionState");
 let faceDetection = document.querySelector("#faceDetection");
+let eyeblinkDetection = document.querySelector("#eyeblinkDetection");
 
 let sendChannel;
 let receiveChannel;
@@ -12,6 +12,9 @@ let dataChannelSend = document.querySelector('textarea#dataChannelSend');
 let dataChannelReceive = document.querySelector('textarea#dataChannelReceive');
 let sendButton = document.querySelector('button#sendButton');
 let unoccupiedTimeElement = document.querySelector('#unoccupiedTime');
+let drowsinessTimeElement =  document.querySelector('#drowsinessTime');
+
+const videoSize = { width: video.width, height: video.height };
 
 // Define peer connections, streams
 let localPeerConnection;
@@ -22,6 +25,8 @@ let remoteStream;
 
 let noFaceStartTime;
 let noFaceEndTime;
+let closedEyesStartTime;
+let openedEyesStartTime;
 
 let startTime;
 let currentTime;
@@ -29,48 +34,60 @@ let timeDiff
 let timer = document.querySelector('#timer');
 let unoccupiedTime = 0;
 let unoccupiedFlag = false;
+let drowsinessTime = 0;
+let drowsinessFlag = false;
+
+// loading the models
+Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+    faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+    faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models'),
+    // faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+]).then(playVideoFromCamera)
 
 ////////////////////////////////////////
 // Time Count
 startTime = Date.now();
-setInterval(timeCounter,1000);
+setInterval(timeCounter, 1000);
 
-
-function timeCounter(){
-    currentTime = Date.now();
-    timeDiff = new Date(currentTime - startTime);
-    let hour = timeDiff.getHours()-9; // UTC 보다 9시간 빠름(대한민국 기준)
-    let minute = timeDiff.getMinutes();
-    let second = timeDiff.getSeconds();
-    if(hour<10){
+function timeConvert(time){
+    let hour = time.getHours() - 9; // UTC 보다 9시간 빠름(대한민국 기준)
+    let minute = time.getMinutes();
+    let second = time.getSeconds();
+    if (hour < 10) {
         hour = '0' + hour.toString();
     }
-    if(minute<10){
+    if (minute < 10) {
         minute = '0' + minute.toString();
     }
-    if(second<10){
+    if (second < 10) {
         second = '0' + second.toString();
     }
-    timer.innerHTML = hour + ':' + minute + ':' + second;
+    return {hh:hour, mm:minute, ss:second};
+}
 
+function timeCounter() {
+    // Time counter
+    currentTime = Date.now();
+    timeDiff = new Date(currentTime - startTime);
+    let timeCounter = time=timeConvert(timeDiff)
+    timer.innerHTML = timeCounter.hh + ':' + timeCounter.mm + ':' + timeCounter.ss;
 
-    if(unoccupiedFlag){
+    // Unoccupied time counter
+    if (unoccupiedFlag) {
         unoccupiedTime += 1000;
         let timeStack = new Date(unoccupiedTime);
-        let hh = timeStack.getHours()-9; // UTC 보다 9시간 빠름(대한민국 기준)
-        let mm = timeStack.getMinutes();
-        let ss = timeStack.getSeconds();
-        if(hh<10){
-            hh = '0' + hh.toString();
-        }
-        if(mm<10){
-            mm = '0' + mm.toString();
-        }
-        if(ss<10){
-            ss = '0' + ss.toString();
-        }
-        unoccupiedTimeElement.innerHTML = hh + ':' + mm + ':' + ss;
-    }    
+        let unoccupiedTimeCounter = timeConvert(timeStack);
+        unoccupiedTimeElement.innerHTML = unoccupiedTimeCounter.hh + ':' + unoccupiedTimeCounter.mm + ':' + unoccupiedTimeCounter.ss;
+    }
+
+    // Drowsiness time counter
+    if (drowsinessFlag) {
+        drowsinessTime += 1000;
+        let timeStack = new Date(sleepTime);
+        let drowsinessTimeCounter = timeConvert(timeStack);
+        drowsinessTimeElement.innerHTML = drowsinessTimeCounter.hh + ':' + drowsinessTimeCounter.mm + ':' + drowsinessTimeCounter.ss;
+    }
 }
 
 
@@ -84,7 +101,6 @@ const offerOptions = {
 // Capture canvas stream
 let canvasStream = canvasOutput.captureStream();
 console.log('Got stream from canvas');
-// videoOut.srcObject = canvasStream;
 
 // Capture video stream using WebRTC API
 async function playVideoFromCamera() {
@@ -99,7 +115,7 @@ async function playVideoFromCamera() {
         console.error('Error opening video camera.', error);
     }
 }
-playVideoFromCamera();
+// playVideoFromCamera();
 
 // Handles remote MediaStream success by adding it as the remoteVideo src.
 function gotRemoteMediaStream(event) {
@@ -252,28 +268,28 @@ function onReceiveChannelStateChange() {
 
 function sendData() {
     let data = dataChannelSend.value;
-    data = 'user1: '+ data;
+    data = 'user1: ' + data;
     sendChannel.send(data);
     console.log('Sent Data: ' + data);
-    setTimeout(()=>dataChannelSend.value='',10);
+    setTimeout(() => dataChannelSend.value = '', 10);
 }
 
 
 dataChannelSend.onkeypress = () => {
     let key = window.event.keyCode;
-    if(key ===13){
+    if (key === 13) {
         sendData();
     }
 }
 dataChannelReceive.disabled = true;
 
-//////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // Call action
 async function call() {
     console.log("Starting call.");
     dataChannelSend.placeholder = '';
     sendButton.onclick = sendData;
-    
+
 
 
     // Get local media stream tracks
@@ -329,121 +345,85 @@ async function call() {
 
 
 
+video.onplay = () => {
+    //rezize canvasOutput
+    faceapi.matchDimensions(canvasOutput, videoSize);
 
-// Video processing using OpenCV.js
-// This has to be called after OpenCV gets loaded, checks if opencv has initialized
-cv['onRuntimeInitialized'] = () => {
-    console.log("OpenCV loaded successfully!");
+    // Deep learning model application
+    setInterval(async () => {
+        const useTinyModel = true;
+        /* Display face landmarks */
+        // Inoptinons size at which image is processed, the smaller the faster,
+        // but less precise in detecting smaller faces, must be divisible
+        // by 32, common sizes are 128, 160, 224, 320, 416, 512, 608,
+        // for face tracking via webcam I would recommend using smaller sizes,
+        // e.g. 128, 160, for detecting smaller faces use larger sizes, e.g. 512, 608
+        // default: 416
+        // minimum confidence threshold
+        // default: 0.5
 
-    let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-    let dst = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-    let gray = new cv.Mat();
-    let cap = new cv.VideoCapture(video);
-    let faces = new cv.RectVector();
-    let eyes = new cv.RectVector();
-    let roiGray = null;
+        // Detect Facial Landmarks
+        const detectionsWithLandmarks = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({
+            scoreThreshold: 0.3
+        })).withFaceLandmarks(useTinyModel);
 
-    let faceClassifier = new cv.CascadeClassifier();
-    let eyeClassifier = new cv.CascadeClassifier();
-    let streaming = false;
-    let utils = new Utils('errorMessage');
-
-
-    // load pre-trained classifiers
-    let faceCascadeFile = 'haarcascade_frontalface_default.xml'; // path to xml
-    let eyeCascadFile = 'haarcascade_eye.xml' // path to xml
-    utils.createFileFromUrl(faceCascadeFile, faceCascadeFile, () => {
-        faceClassifier.load(faceCascadeFile); // in the callback, load the cascade from file 
-    });
-    utils.createFileFromUrl(eyeCascadFile, eyeCascadFile, () => {
-        eyeClassifier.load(eyeCascadFile); // in the callback, load the cascade from file 
-    });
-
-    const FPS = 30;
-
-    function processVideo() {
-        try {
-            if (!streaming) {
-                // clean and stop.
-                src.delete();
-                dst.delete();
-                gray.delete();
-                faces.delete();
-                faceClassifier.delete();
-                eyeClassifier.delete();
-                roiGray.delete();
-                roiSrc.delete();
-                return;
-            }
-            let begin = Date.now();
-            // start processing.
-            cap.read(src);
-            src.copyTo(dst);
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-
-            // detect faces.
-            try {
-                faceClassifier.detectMultiScale(gray, faces, 1.1, 3, 0);
-                if (faces.size() == 0) {
-                    noFaceEndTime = Date.now()
-                    faceDetection.innerHTML = '얼굴 없음'
-                } else {
-                    unoccupiedFlag = false;
-                    faceDetection.innerHTML = '얼굴 감지';
-                    noFaceStartTime = Date.now();
-                }
-                if (noFaceEndTime - noFaceStartTime > 3000) {
-                    isEmpty.innerHTML = '자리비움';
-                    unoccupiedFlag = true;
-                } else {
-                    isEmpty.innerHTML = '';
-                }
-                console.log(faces.size());
-            } catch (err) {
-                console.log(err);
-            }
-
-            // draw faces.
-            for (let i = 0; i < faces.size(); ++i) {
-                roiGray = gray.roi(faces.get(i));
-                roiSrc = dst.roi(faces.get(i));
-                let face = faces.get(i);
-                let point1 = new cv.Point(face.x, face.y);
-                let point2 = new cv.Point(face.x + face.width, face.y + face.height);
-                cv.rectangle(dst, point1, point2, [255, 0, 0, 255]);
-
-                // detect eyes in face ROI
-                eyeClassifier.detectMultiScale(roiGray, eyes);
-                for (let j = 0; j < eyes.size(); ++j) {
-                    let point1 = new cv.Point(eyes.get(j).x, eyes.get(j).y);
-                    let point2 = new cv.Point(eyes.get(j).x + eyes.get(j).width,
-                        eyes.get(j).y + eyes.get(j).height);
-                    cv.rectangle(roiSrc, point1, point2, [0, 0, 255, 255]);
-                }
-            }
-
-
-            cv.imshow('canvasOutput', dst);
-            // schedule the next one.
-            let delay = 1000 / FPS - (Date.now() - begin);
-            setTimeout(processVideo, delay);
-        } catch (err) {
-            console.log("processVideo error", err);
+        if (detectionsWithLandmarks.length == 0) {
+            noFaceEndTime = Date.now()
+            faceDetection.innerHTML = '얼굴 없음'
+        } else {
+            unoccupiedFlag = false;
+            faceDetection.innerHTML = '얼굴 감지';
+            noFaceStartTime = Date.now();
         }
-    }
-
-    //schedule first one.
-    video.onplay = (event) => {
-        console.log("video start");
-
-        streaming = true;
-        processVideo();
-        call();
-    };
+        if (noFaceEndTime - noFaceStartTime > 3000) {
+            detectionState.innerHTML = '자리비움';
+            unoccupiedFlag = true;
+        } else {
+            detectionState.innerHTML = '';
+        }
+        
+        // EAR calculation
+        if(!unoccupiedFlag){    // if occupied
+            const landmarks = await faceapi.detectFaceLandmarks(video);
+            const leftEye = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
+            const leftEyeEAR = (faceapi.euclideanDistance([leftEye[1]._x, leftEye[1]._y], [leftEye[5]._x, leftEye[5]._y]) + faceapi.euclideanDistance([leftEye[2]._x, leftEye[2]._y], [leftEye[4]._x, leftEye[4]._y])) / (2 * faceapi.euclideanDistance([leftEye[0]._x, leftEye[0]._y], [leftEye[3]._x, leftEye[3]._y]));
+            const rightEyeEAR = (faceapi.euclideanDistance([rightEye[1]._x, rightEye[1]._y], [rightEye[5]._x, rightEye[5]._y]) + faceapi.euclideanDistance([rightEye[2]._x, rightEye[2]._y], [rightEye[4]._x, rightEye[4]._y])) / (2 * faceapi.euclideanDistance([rightEye[0]._x, rightEye[0]._y], [rightEye[3]._x, rightEye[3]._y]));
+            const avgEAR = ((leftEyeEAR + rightEyeEAR) / 2) * 500
+            if (avgEAR < 150){ // Eye closed
+                eyeblinkDetection.innerHTML = 'Eyes closed';
+                closedEyesStartTime = Date.now();
+            }else{ // Eye opened
+                eyeblinkDetection.innerHTML = 'Eyes opened';
+                openedEyesStartTime = Date.now();
+            }
+            console.log('close:', closedEyesStartTime,'open: ', openedEyesStartTime);
+            if (closedEyesStartTime - openedEyesStartTime > 2000) {
+                detectionState.innerHTML = '졸음감지';
+                drowsinessFlag = true;
+            } else {
+                detectionState.innerHTML = '';
+            }
+        }else{ // if unoccupied
+            drowsinessFlag = false;
+        }
+        
+        // detect faces.
+        // resize the detected boxes and landmarks in case your displayed image has a different size than the original
+        const resizedResults = faceapi.resizeResults(detectionsWithLandmarks, videoSize);
+        // Rendering
+        let ctx = canvasOutput.getContext('2d');
+        ctx.clearRect(0, 0, canvasOutput.width, canvasOutput.height) //앞에 그린 것 지우기
+        ctx.drawImage(video, 0, 0, videoSize.width, videoSize.height);
+        // draw detections into the canvas
+        faceapi.draw.drawDetections(canvasOutput, resizedResults);
+        // draw the landmarks into the canvas
+        faceapi.draw.drawFaceLandmarks(canvasOutput, resizedResults);
+    }, 200);
+    call();
 }
 
-
-// Define helper functions.
+// // Define helper functions.
 
 // Gets the "other" peer connection.
 function getOtherPeer(peerConnection) {

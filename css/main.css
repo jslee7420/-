@@ -1,4 +1,4 @@
-/* .videos{
+.videos{
     display:flex;
     margin:10px 30px;
     float:left;
@@ -16,23 +16,19 @@
     bottom: 0;
     right:0;
     border-left:solid 2px black;
-} */
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    background-color:#d3cfcf;
+}
 @import url('https://fonts.googleapis.com/css2?family=Rancho&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gaegu&family=Rancho&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap');
-a{
 
-    font-family: 'Rancho', cursive;
-}
-h1{
-    font-family: 'Sunflower', sans-serif;
-    text-align: center;
-}
 p{
-    font-family: 'Sunflower', sans-serif;
-    font-size: 2rem;
+    font-weight: bold;
     text-align: center;
-}
+} 
 
 #dataChannelReceive{
     width:400px;
@@ -42,3 +38,4 @@ p{
 #dataChannelSend{
     width:400px;
 }
+
