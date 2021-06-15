@@ -84,7 +84,7 @@ function timeCounter() {
     // Drowsiness time counter
     if (drowsinessFlag) {
         drowsinessTime += 1000;
-        let timeStack = new Date(sleepTime);
+        let timeStack = new Date(drowsinessTime);
         let drowsinessTimeCounter = timeConvert(timeStack);
         drowsinessTimeElement.innerHTML = drowsinessTimeCounter.hh + ':' + drowsinessTimeCounter.mm + ':' + drowsinessTimeCounter.ss;
     }
@@ -107,7 +107,7 @@ async function playVideoFromCamera() {
     try {
         const constraints = {
             'video': true,
-            'audio': true
+            'audio': false
         };
         localStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = localStream;
@@ -369,7 +369,8 @@ video.onplay = () => {
 
         if (detectionsWithLandmarks.length == 0) {
             noFaceEndTime = Date.now()
-            faceDetection.innerHTML = '얼굴 없음'
+            faceDetection.innerHTML = '얼굴 없음';
+            eyeblinkDetection.innerHTML = '';
         } else {
             unoccupiedFlag = false;
             faceDetection.innerHTML = '얼굴 감지';
@@ -383,28 +384,29 @@ video.onplay = () => {
         }
         
         // EAR calculation
-        if(!unoccupiedFlag){    // if occupied
+        if(!unoccupiedFlag){    // detect drowsiness when occupied
             const landmarks = await faceapi.detectFaceLandmarks(video);
             const leftEye = landmarks.getLeftEye();
             const rightEye = landmarks.getRightEye();
+            // EAR(Eye Aspect Ratio calculation)
             const leftEyeEAR = (faceapi.euclideanDistance([leftEye[1]._x, leftEye[1]._y], [leftEye[5]._x, leftEye[5]._y]) + faceapi.euclideanDistance([leftEye[2]._x, leftEye[2]._y], [leftEye[4]._x, leftEye[4]._y])) / (2 * faceapi.euclideanDistance([leftEye[0]._x, leftEye[0]._y], [leftEye[3]._x, leftEye[3]._y]));
             const rightEyeEAR = (faceapi.euclideanDistance([rightEye[1]._x, rightEye[1]._y], [rightEye[5]._x, rightEye[5]._y]) + faceapi.euclideanDistance([rightEye[2]._x, rightEye[2]._y], [rightEye[4]._x, rightEye[4]._y])) / (2 * faceapi.euclideanDistance([rightEye[0]._x, rightEye[0]._y], [rightEye[3]._x, rightEye[3]._y]));
-            const avgEAR = ((leftEyeEAR + rightEyeEAR) / 2) * 500
-            if (avgEAR < 150){ // Eye closed
+            const avgEAR = ((leftEyeEAR + rightEyeEAR) / 2.0) * 500
+            if (avgEAR < 230){ // Eye closed
                 eyeblinkDetection.innerHTML = 'Eyes closed';
                 closedEyesStartTime = Date.now();
             }else{ // Eye opened
                 eyeblinkDetection.innerHTML = 'Eyes opened';
+                drowsinessFlag = false;
                 openedEyesStartTime = Date.now();
             }
-            console.log('close:', closedEyesStartTime,'open: ', openedEyesStartTime);
             if (closedEyesStartTime - openedEyesStartTime > 2000) {
                 detectionState.innerHTML = '졸음감지';
                 drowsinessFlag = true;
             } else {
                 detectionState.innerHTML = '';
             }
-        }else{ // if unoccupied
+        }else{ // no drowsiness detection when unoccupied
             drowsinessFlag = false;
         }
         
