@@ -5,7 +5,7 @@
 Study With Us는 **참여자들의 모습을 웹캠으로 공유하며 진행하는 캠스터디 플랫폼**입니다. 기존의 캠스터디 플랫폼에 인공지능 관리 기능을 더해 보다 적극적인 관리와 함께 공부시간에 대한 객관적인 피드백을 제공합니다. 이 프로젝트는 코로나 19로 증가한 재택학습/재택근무자들이 겪는 집중력 및 자기통제력 하락 문제를 해결하기 위해 시작되었습니다. 현재 로컬에서만 작동하는 데모버전까지 구현에 성공했습니다.
 
 ## System Architecture
-![StudyWithUs System Architecture](https://user-images.githubusercontent.com/46511190/125466565-d61b8cdc-c97c-4bfc-ba4d-3c175d1ce5e9.png)
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466565-d61b8cdc-c97c-4bfc-ba4d-3c175d1ce5e9.png"></p>
 
 ## 기술 스택
 
@@ -130,19 +130,23 @@ setInterval(async () => {
 
 face-api.js에서는 face landmark을 그려 face recognition과 face expression recognition을 가능하게 해줍니다. face landmark에서 left eye와 right eye 객체만을 뽑아내 eye blink detecitond을 구현하였습니다.
 
-EAR(Eye Aspect Ratio)
+**EAR(Eye Aspect Ratio)**
+
 eye blink detection을 위해 2016년에 나온 Soukupová and Čech 의 논문 “Real-Time Eye Blink Detection using Facial Landmarks”을 참고하였습니다. face landmark에서는 다음 사진과 같이 눈의 형태를 6개의 landmark로 표현합니다.
-![The 6 facial landmarks associated with the eye](https://user-images.githubusercontent.com/46511190/125466630-90a95b5e-41eb-445b-8a4d-dab37485fea6.png)
-The 6 facial landmarks associated with the eye.
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466630-90a95b5e-41eb-445b-8a4d-dab37485fea6.png"></p>
+<p align="center">The 6 facial landmarks associated with the eye.</p>
+
 
 이렇게 얻어진 6개점의 좌표값을 EAR(Eye Aspect Ratio)에 넣어주면 눈감김 여부를 탐지할 수 있습니다. EAR에서 분자값은 eye landmark의 수직 거리를 계산하고 분모에서는 수평 거리를 계산하게 됩니다. 수직거리를 두번 더하기 때문에 분모에 2를 곱함으로써 가중치를 준 식입니다.
-The eye aspect ratio equation.
-![visualization of eye landmarks](https://user-images.githubusercontent.com/46511190/125466648-2d369784-50dc-4b1b-bd8c-f0da81d6e312.png)
-Top-left: A visualization of eye landmarks when then the eye is open. Top-right: Eye landmarks when the eye is closed. Bottom: Plotting the eye aspect ratio over time. The dip in the eye aspect ratio indicates a blink
+
+**The eye aspect ratio equation**
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466648-2d369784-50dc-4b1b-bd8c-f0da81d6e312.png"></p>
+<p align="center">Top-left: A visualization of eye landmarks when then the eye is open. Top-right: Eye landmarks when the eye is closed. Bottom: Plotting the eye aspect ratio over time. The dip in the eye aspect ratio indicates a blink</p>
+
 
 위 그래프에서 볼 수 있듯이 눈이 떠져있는 상태에서는 눈 크기의 변화가 있음에도 EAR값의 변화가 완만하여 상수값에 가깝습니다. 하지만 눈이 감기는 순간에는 EAR이 급격히 0에 가까워짐을 볼 수 있습니다. 이렇게 EAR값이 0에 가까워지는 순간 눈감김이 일어났음을 알 수 있습니다.
 
-EAR 계산을 통한 졸음 감지
+**EAR 계산을 통한 졸음 감지**
 
 face-api.js의 detectFaceLandmark 메소드로 face landmark를 얻어서 왼쪽과 오른쪽눈의 landmark를 따로 객체로 생성했습니다. 이후 양쪽눈 각각에 대해 euclideanDistance를 구하여 EAR을 계산하여 두눈의 EAR 값의 평균을 구하였고 scaling을 하여 임계값 이하로 떨어지는 EAR값이 계산될때를 눈감김으로 인식하고도록 구현했습니다. 자리비움 감지와 마찬가지로 눈감김이 일정시간이상 지속되는 경우 졸음으로 판단합니다.
 
@@ -178,20 +182,20 @@ const detectionsWithLandmarks = await faceapi.detectAllFaces(video, new         
 ## 결과
 
 ### 1. Study With Us Demo 시연 화면
-![시연1](https://user-images.githubusercontent.com/46511190/125466673-38bfadaf-0b77-472a-9413-42241958bb4b.png)
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466673-38bfadaf-0b77-472a-9413-42241958bb4b.png"></p>
 웹캠 화면이 정상적으로 브라우저에 보이는 것을 확인 할 수 있습니다. 시그널링 서버 구현을 하지 못해 로컬 환경에서 p2p로 영상을 보내고 받도록 구현했습니다. Local Video가 사용자 본인의 화면을 나타내고 Remote Video는 전송보낸 영상이 출력됩니다. face detection과 face landmark가 작동함을 보이기 위해 영상에 object box와 landmark contour를 그려주었습니다.
 
 ### 2. 자리비움 감지
-![시연_자리비움](https://user-images.githubusercontent.com/46511190/125466680-7ba82048-6d00-4bb3-ba15-a34d2d16214d.png)
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466680-7ba82048-6d00-4bb3-ba15-a34d2d16214d.png"></p>
 자리를 비우면 자리비움을 감지하여 자리비움 문구와 함께 자리비움 시간 카운트가 실행됩니다.
 
 ### 3. 졸음 감지
-![시연_졸음감지](https://user-images.githubusercontent.com/46511190/125466689-0cffb22a-5963-4ff1-b68d-818cf2f31a16.png)
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466689-0cffb22a-5963-4ff1-b68d-818cf2f31a16.png"></p>
 눈을 일정 시간 이상 감고 있는 경우 졸음이 감지 됩니다. 하지만 face-api.js가 제공하는 face landmark 모델의 eye landmark 탐지 성능이 좋지 않아 부정확한 동작을 보였습니다.
 
 ### 4. 채팅
-![시연_채팅1](https://user-images.githubusercontent.com/46511190/125466693-6b2580cf-425e-45a0-ba79-ee51ec0693d2.png)
-![시연_채팅2](https://user-images.githubusercontent.com/46511190/125466703-da713d8b-8061-4e01-a16a-78ff335eda6c.png)
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466693-6b2580cf-425e-45a0-ba79-ee51ec0693d2.png"></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466703-da713d8b-8061-4e01-a16a-78ff335eda6c.png"></p>
 채팅 기능도 정상 작동함을 볼 수 있습니다. 채팅의 경우 RTCPeerConnection으로 생성한 Data channel을 통해 상대방 피어로 전송됩니다.
 
 ## Refrences
