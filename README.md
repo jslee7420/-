@@ -198,7 +198,7 @@ const detectionsWithLandmarks = await faceapi.detectAllFaces(video, new         
 <p align="center"><img src="https://user-images.githubusercontent.com/46511190/125466703-da713d8b-8061-4e01-a16a-78ff335eda6c.png"></p>
 채팅 기능도 정상 작동함을 볼 수 있습니다. 채팅의 경우 RTCPeerConnection으로 생성한 Data channel을 통해 상대방 피어로 전송됩니다.
 
-## Refrences
+## References
 
 https://www.pyimagesearch.com/2017/04/24/eye-blink-detection-opencv-python-dlib/
 https://webrtc.org/
